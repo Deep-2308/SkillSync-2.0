@@ -1,26 +1,281 @@
+@import url("https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@config "../tailwind.config.ts";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /* shadcn semantic tokens */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Midnight Craft design tokens */
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-primary-dark: var(--primary-dark);
+  --color-ai: var(--ai);
+  --color-success: var(--success);
+  --color-error: var(--error);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+
+  /* fonts */
+  --font-heading: "Syne", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  /* radius */
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/*
+ * Midnight Craft — dark-mode-first design system.
+ * All values authored in oklch(). Tokens live in :root so the platform
+ * is dark by default; .dark mirrors them for explicit theme switching.
+ */
+:root {
+  /* raw brand palette */
+  --surface: oklch(0.19 0.02 266); /* #10131E */
+  --surface-2: oklch(0.23 0.025 264); /* #161A28 */
+  --primary-dark: oklch(0.609 0.107 221.7); /* #0891B2 */
+  --ai: oklch(0.709 0.144 293.5); /* #A78BFA */
+  --success: oklch(0.792 0.171 151.7); /* #4ADE80 */
+  --error: oklch(0.704 0.191 22.2); /* #F87171 */
+  --text: oklch(0.929 0.013 255.5); /* #E2E8F0 */
+  --text-muted: oklch(0.554 0.046 257.4); /* #64748B */
+
+  /* shadcn semantic tokens mapped onto the brand palette */
+  --background: oklch(0.16 0.018 266); /* #0A0C14 */
+  --foreground: oklch(0.929 0.013 255.5); /* text */
+  --card: oklch(0.19 0.02 266); /* surface */
+  --card-foreground: oklch(0.929 0.013 255.5);
+  --popover: oklch(0.23 0.025 264); /* surface-2 */
+  --popover-foreground: oklch(0.929 0.013 255.5);
+  --primary: oklch(0.789 0.131 201.4); /* #22D3EE sky blue */
+  --primary-foreground: oklch(0.16 0.018 266); /* dark navy on primary */
+  --secondary: oklch(0.23 0.025 264); /* surface-2 */
+  --secondary-foreground: oklch(0.929 0.013 255.5);
+  --muted: oklch(0.23 0.025 264);
+  --muted-foreground: oklch(0.554 0.046 257.4); /* text-muted */
+  --accent: oklch(0.769 0.163 70.08); /* #F59E0B amber */
+  --accent-foreground: oklch(0.16 0.018 266); /* dark navy on amber */
+  --destructive: oklch(0.704 0.191 22.2); /* error */
+  --border: oklch(0.27 0.025 264); /* #1E2533 */
+  --input: oklch(0.27 0.025 264);
+  --ring: oklch(0.789 0.131 201.4); /* #22D3EE focus ring */
+
+  --chart-1: oklch(0.789 0.131 201.4); /* primary */
+  --chart-2: oklch(0.769 0.163 70.08); /* accent */
+  --chart-3: oklch(0.709 0.144 293.5); /* ai */
+  --chart-4: oklch(0.792 0.171 151.7); /* success */
+  --chart-5: oklch(0.704 0.191 22.2); /* error */
+
+  --radius: 0.25rem;
+
+  --sidebar: oklch(0.19 0.02 266); /* surface */
+  --sidebar-foreground: oklch(0.929 0.013 255.5);
+  --sidebar-primary: oklch(0.789 0.131 201.4);
+  --sidebar-primary-foreground: oklch(0.16 0.018 266);
+  --sidebar-accent: oklch(0.23 0.025 264);
+  --sidebar-accent-foreground: oklch(0.929 0.013 255.5);
+  --sidebar-border: oklch(0.27 0.025 264);
+  --sidebar-ring: oklch(0.789 0.131 201.4);
+}
+
+.dark {
+  --surface: oklch(0.19 0.02 266);
+  --surface-2: oklch(0.23 0.025 264);
+  --primary-dark: oklch(0.609 0.107 221.7);
+  --ai: oklch(0.709 0.144 293.5);
+  --success: oklch(0.792 0.171 151.7);
+  --error: oklch(0.704 0.191 22.2);
+  --text: oklch(0.929 0.013 255.5);
+  --text-muted: oklch(0.554 0.046 257.4);
+
+  --background: oklch(0.16 0.018 266);
+  --foreground: oklch(0.929 0.013 255.5);
+  --card: oklch(0.19 0.02 266);
+  --card-foreground: oklch(0.929 0.013 255.5);
+  --popover: oklch(0.23 0.025 264);
+  --popover-foreground: oklch(0.929 0.013 255.5);
+  --primary: oklch(0.789 0.131 201.4);
+  --primary-foreground: oklch(0.16 0.018 266);
+  --secondary: oklch(0.23 0.025 264);
+  --secondary-foreground: oklch(0.929 0.013 255.5);
+  --muted: oklch(0.23 0.025 264);
+  --muted-foreground: oklch(0.554 0.046 257.4);
+  --accent: oklch(0.769 0.163 70.08);
+  --accent-foreground: oklch(0.16 0.018 266);
+  --destructive: oklch(0.704 0.191 22.2);
+  --border: oklch(0.27 0.025 264);
+  --input: oklch(0.27 0.025 264);
+  --ring: oklch(0.789 0.131 201.4);
+
+  --chart-1: oklch(0.789 0.131 201.4);
+  --chart-2: oklch(0.769 0.163 70.08);
+  --chart-3: oklch(0.709 0.144 293.5);
+  --chart-4: oklch(0.792 0.171 151.7);
+  --chart-5: oklch(0.704 0.191 22.2);
+
+  --sidebar: oklch(0.19 0.02 266);
+  --sidebar-foreground: oklch(0.929 0.013 255.5);
+  --sidebar-primary: oklch(0.789 0.131 201.4);
+  --sidebar-primary-foreground: oklch(0.16 0.018 266);
+  --sidebar-accent: oklch(0.23 0.025 264);
+  --sidebar-accent-foreground: oklch(0.929 0.013 255.5);
+  --sidebar-border: oklch(0.27 0.025 264);
+  --sidebar-ring: oklch(0.789 0.131 201.4);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.02em;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ------------------------------------------------------------------ */
+/* Keyframes                                                           */
+/* ------------------------------------------------------------------ */
+@keyframes shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
+}
+
+@keyframes stream-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes badge-pulse {
+  0% {
+    transform: scale(0.85);
+    box-shadow: 0 0 0 0 oklch(0.769 0.163 70.08 / 0.55);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow: 0 0 28px 10px oklch(0.769 0.163 70.08 / 0.35);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 oklch(0.769 0.163 70.08 / 0);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Utility classes                                                     */
+/* ------------------------------------------------------------------ */
+@layer utilities {
+  /* amber → amber-dark gradient for earned badge backgrounds */
+  .gradient-badge {
+    background-image: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
+  }
+
+  /* violet → indigo gradient for AI / generating elements */
+  .gradient-ai {
+    background-image: linear-gradient(135deg, #a78bfa 0%, #6366f1 100%);
+  }
+
+  /* sky-blue gradient for primary CTAs */
+  .gradient-primary {
+    background-image: linear-gradient(135deg, #22d3ee 0%, #0891b2 100%);
+  }
+
+  /* glassmorphism for elevated / floating cards */
+  .glass-card {
+    background-color: color-mix(in oklab, var(--surface) 70%, transparent);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid color-mix(in oklab, white 10%, transparent);
+  }
+
+  /* shimmer sweep for skeleton loading states */
+  .skeleton-shimmer {
+    background-image: linear-gradient(
+      90deg,
+      var(--surface) 25%,
+      var(--surface-2) 37%,
+      var(--surface) 63%
+    );
+    background-size: 400% 100%;
+    animation: shimmer 1.4s ease infinite;
+  }
+
+  /* blinking caret appended to streaming text */
+  .stream-cursor::after {
+    content: "";
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    background-color: var(--primary);
+    animation: stream-blink 1s step-end infinite;
+  }
+
+  /* scale + glow pulse for the badge issuance moment */
+  .badge-pulse {
+    animation: badge-pulse 0.9s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
 }
