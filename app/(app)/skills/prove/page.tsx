@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
   Sparkles,
@@ -54,8 +54,23 @@ const TITLE_SPEED = 20;
 const BODY_SPEED = 5;
 
 export default function ProveSkillsPage() {
+  return (
+    <Suspense fallback={null}>
+      <ProveSkillsInner />
+    </Suspense>
+  );
+}
+
+function ProveSkillsInner() {
   const router = useRouter();
   const { data: session } = useSession();
+  const searchParams = useSearchParams();
+
+  // Optional deep-link params (used by the result page's "Try again" /
+  // "Lower the difficulty" actions).
+  const skillParam = searchParams.get("skill");
+  const difficultyParam = searchParams.get("difficulty");
+  const autoParam = searchParams.get("auto");
 
   const primaryDomain = (session?.user?.primaryDomain ??
     null) as PrimaryDomain | null;
@@ -67,7 +82,13 @@ export default function ProveSkillsPage() {
 
   // ─── Left panel state ──────────────────────────────────────────────────────
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
-  const [difficulty, setDifficulty] = useState<Difficulty>("intermediate");
+  const [difficulty, setDifficulty] = useState<Difficulty>(
+    difficultyParam === "beginner" ||
+      difficultyParam === "intermediate" ||
+      difficultyParam === "advanced"
+      ? difficultyParam
+      : "intermediate"
+  );
 
   // ─── Right panel state ─────────────────────────────────────────────────────
   const [rightState, setRightState] = useState<RightState>("empty");
@@ -87,10 +108,23 @@ export default function ProveSkillsPage() {
 
   const generating = rightState === "loading";
 
-  // Reset skill selection when the domain changes (e.g. session hydrates).
+  // Preselect the skill from the query param when it's valid for the current
+  // domain; otherwise clear the selection (also resets when the domain
+  // changes as the session hydrates).
   useEffect(() => {
-    setSelectedSkill(null);
-  }, [domain]);
+    setSelectedSkill(
+      skillParam && skills.includes(skillParam) ? skillParam : null
+    );
+  }, [domain, skillParam, skills]);
+
+  // Auto-generate once when deep-linked with ?auto=1 (the "Try again" flow).
+  const autoRanRef = useRef(false);
+  useEffect(() => {
+    if (autoParam !== "1" || autoRanRef.current || !selectedSkill) return;
+    autoRanRef.current = true;
+    handleGenerate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoParam, selectedSkill]);
 
   // ─── Fake streaming effect ───────────────────────────────────────────────────
   // Reveal the title char-by-char, then mark the body for streaming.
