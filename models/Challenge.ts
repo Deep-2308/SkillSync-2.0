@@ -18,9 +18,17 @@ export interface IChallengeSubmission {
   submittedAt?: Date;
 }
 
+export interface IScoreBreakdown {
+  completeness: number;
+  quality: number;
+  accuracy: number;
+  depth: number;
+}
+
 export interface IChallengeEvaluation {
   score: number;
   passed: boolean;
+  scoreBreakdown?: IScoreBreakdown;
   overallFeedback: string;
   strengths: string[];
   improvements: string[];
@@ -69,6 +77,17 @@ const ChallengeEvaluationSchema = new Schema<IChallengeEvaluation>(
   {
     score: { type: Number, min: 0, max: 100 },
     passed: { type: Boolean },
+    scoreBreakdown: {
+      type: new Schema<IScoreBreakdown>(
+        {
+          completeness: { type: Number, min: 0, max: 25 },
+          quality: { type: Number, min: 0, max: 30 },
+          accuracy: { type: Number, min: 0, max: 25 },
+          depth: { type: Number, min: 0, max: 20 },
+        },
+        { _id: false }
+      ),
+    },
     overallFeedback: { type: String },
     strengths: { type: [String], default: [] },
     improvements: { type: [String], default: [] },

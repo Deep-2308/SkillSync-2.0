@@ -44,6 +44,27 @@ export class RateLimitError extends AppError {
   }
 }
 
+/** Requested resource does not exist. */
+export class NotFoundError extends AppError {
+  constructor(message = "Not found") {
+    super(404, { error: message });
+  }
+}
+
+/** Authenticated, but not allowed to act on this resource. */
+export class ForbiddenError extends AppError {
+  constructor(message = "Forbidden") {
+    super(403, { error: message });
+  }
+}
+
+/** Generic 400 with a human-readable message (e.g. failed precondition). */
+export class ValidationError extends AppError {
+  constructor(message = "Validation failed") {
+    super(400, { error: message });
+  }
+}
+
 /** The AI returned something we couldn't parse/validate into a challenge. */
 export class AIResponseError extends AppError {
   constructor() {
