@@ -74,7 +74,11 @@ export class AIResponseError extends AppError {
 
 /** The upstream AI provider failed (after retries) or timed out. */
 export class AIServiceError extends AppError {
-  constructor(message = "Anthropic request failed") {
-    super(500, { error: "Failed to generate challenge" }, message);
+  constructor(
+    message = "Anthropic request failed",
+    clientError = "Failed to generate challenge",
+    status = 500
+  ) {
+    super(status, { error: clientError }, message);
   }
 }

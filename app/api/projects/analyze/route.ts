@@ -27,7 +27,7 @@ const inputSchema = z.object({
 const roleSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1),
-  requiredSkills: z.array(z.string().min(1)).min(2).max(5),
+  requiredSkills: z.array(z.string().min(1)).min(1).max(12),
   importance: z.string().min(1),
 });
 
@@ -37,8 +37,8 @@ const analysisSchema = z.object({
   targetOutcome: z.string().min(1),
   estimatedDuration: z.string().min(1),
   complexity: z.enum(["low", "medium", "high"]),
-  tags: z.array(z.string().min(1)).min(3).max(6),
-  roles: z.array(roleSchema).min(3).max(6),
+  tags: z.array(z.string().min(1)).min(2).max(12),
+  roles: z.array(roleSchema).min(2).max(8),
 });
 
 /** Raised when the Gemini call itself fails (network/timeout/upstream). */
@@ -109,7 +109,15 @@ export async function POST(request: NextRequest) {
       const response = await ai.models.generateContent({
         model: GEMINI_MODEL,
         contents: prompt,
-        config: { temperature: 0.5, maxOutputTokens: 1200 },
+        config: {
+          temperature: 0.5,
+          maxOutputTokens: 2048,
+          // gemini-2.5-flash is a "thinking" model: without this it spends the
+          // whole token budget on internal reasoning and truncates the JSON.
+          thinkingConfig: { thinkingBudget: 0 },
+          // Force a clean JSON body (no markdown fences / prose).
+          responseMimeType: "application/json",
+        },
       });
       text = response.text;
     } catch (geminiError) {

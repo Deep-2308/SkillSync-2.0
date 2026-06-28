@@ -85,7 +85,39 @@ export async function createMessage(
     }
   }
 
-  throw new AIServiceError(
-    lastError instanceof Error ? lastError.message : "Anthropic request failed"
-  );
+  throw mapToServiceError(lastError);
+}
+
+/**
+ * Translate an upstream Anthropic failure into a typed {@link AIServiceError}
+ * with a client-facing message that reflects the real cause (billing, auth,
+ * rate limit) instead of a generic catch-all.
+ */
+function mapToServiceError(error: unknown): AIServiceError {
+  const status = statusOf(error);
+  const upstream =
+    error instanceof Error ? error.message : "Anthropic request failed";
+
+  if (status === 400 && /credit balance|billing|quota/i.test(upstream)) {
+    return new AIServiceError(
+      upstream,
+      "AI is unavailable: the Anthropic account is out of credits. Add credits in the Anthropic console (Plans & Billing) and try again.",
+      402
+    );
+  }
+  if (status === 401 || status === 403) {
+    return new AIServiceError(
+      upstream,
+      "AI is unavailable: the Anthropic API key is missing or invalid.",
+      502
+    );
+  }
+  if (status === 429) {
+    return new AIServiceError(
+      upstream,
+      "The AI service is rate-limited right now. Please try again in a moment.",
+      429
+    );
+  }
+  return new AIServiceError(upstream);
 }

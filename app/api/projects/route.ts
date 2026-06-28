@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
 const roleInputSchema = z.object({
   title: z.string().trim().min(1).max(120),
   description: z.string().trim().min(1),
-  requiredSkills: z.array(z.string().trim().min(1)).min(1).max(8),
+  requiredSkills: z.array(z.string().trim().min(1)).min(1).max(12),
   importance: z.string().trim().default(""),
 });
 
