@@ -32,6 +32,24 @@ export const authSignupSchema = z.object({
   role: z.enum(["Builder", "Learner"]),
 });
 
+const optionalUrlSchema = z
+  .string()
+  .optional()
+  .or(z.literal(""))
+  .transform((val) => {
+    if (!val) return val;
+    return /^https?:\/\//i.test(val) ? val : `https://${val}`;
+  })
+  .refine((val) => {
+    if (!val) return true;
+    try {
+      new URL(val);
+      return true;
+    } catch {
+      return false;
+    }
+  }, "Please enter a valid URL");
+
 // Onboarding — final profile payload sent to PATCH /api/users/me.
 export const onboardingProfileSchema = z.object({
   primaryDomain: z.enum(PRIMARY_DOMAINS),
@@ -44,16 +62,8 @@ export const onboardingProfileSchema = z.object({
     .max(300, "Bio must be under 300 characters")
     .optional()
     .or(z.literal("")),
-  githubUrl: z
-    .string()
-    .url("Please enter a valid URL")
-    .optional()
-    .or(z.literal("")),
-  portfolioUrl: z
-    .string()
-    .url("Please enter a valid URL")
-    .optional()
-    .or(z.literal("")),
+  githubUrl: optionalUrlSchema,
+  portfolioUrl: optionalUrlSchema,
   onboardingCompleted: z.boolean().optional(),
 });
 
@@ -64,9 +74,9 @@ export const onboardingSchema = z.object({
   skills: z.array(z.string()).min(1, "Select at least one skill"),
   interests: z.array(z.string()).min(1, "Select at least one interest"),
   experience: z.enum(["beginner", "intermediate", "advanced", "expert"]),
-  github: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
-  linkedin: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
-  portfolio: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
+  github: optionalUrlSchema,
+  linkedin: optionalUrlSchema,
+  portfolio: optionalUrlSchema,
 });
 
 // ─── Project Validations ────────────────────────────────────────────────────
