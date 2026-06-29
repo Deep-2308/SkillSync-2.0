@@ -1,3 +1,9 @@
+import { notFound, redirect } from "next/navigation";
+
+import { auth } from "@/auth";
+import { getPublicProfile } from "@/lib/profile";
+import { ProfileExperience } from "@/components/profile/ProfileExperience";
+
 interface ProfilePageProps {
   params: Promise<{ id: string }>;
 }
@@ -5,10 +11,15 @@ interface ProfilePageProps {
 export default async function ProfilePage({ params }: ProfilePageProps) {
   const { id } = await params;
 
-  return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold">User Profile</h1>
-      <p className="text-muted-foreground">User ID: {id}</p>
-    </div>
-  );
+  const session = await auth();
+  if (!session?.user?.id) redirect("/login");
+
+  const isOwn = session.user.id === id;
+
+  // Same data the GET /api/users/[id] endpoint returns, sourced directly for
+  // reliable server rendering.
+  const profile = await getPublicProfile(id, isOwn);
+  if (!profile) notFound();
+
+  return <ProfileExperience profile={profile} isOwn={isOwn} />;
 }

@@ -14,30 +14,24 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/* ------------------------------------------------------------------ */
-/* Lightning-bolt brand icon (inline SVG, 24×24)                       */
-/* ------------------------------------------------------------------ */
-function BoltIcon({ className }: { className?: string }) {
+/* Lightning bolt inside a hexagon — brand mark. */
+function Logo({ className }: { className?: string }) {
   return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-    >
+    <svg viewBox="0 0 32 32" className={cn("size-6", className)} aria-hidden>
       <path
-        d="M13 2L4.09 12.64a1 1 0 0 0 .78 1.63H11l-1 7.73L19.91 11.36a1 1 0 0 0-.78-1.63H13l1-7.73Z"
-        fill="currentColor"
+        d="M16 2 L28 9 V23 L16 30 L4 23 V9 Z"
+        className="fill-primary/10 stroke-primary"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M17.5 7 L11 17.5 H15 L14.5 25 L21.5 13.5 H16.5 Z"
+        className="fill-primary"
       />
     </svg>
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Navigation items                                                    */
-/* ------------------------------------------------------------------ */
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Prove a Skill", href: "/skills/prove", icon: Zap },
@@ -45,9 +39,6 @@ const navItems = [
   { label: "Discover Projects", href: "/projects/discover", icon: Compass },
 ];
 
-/* ------------------------------------------------------------------ */
-/* Initials helper                                                     */
-/* ------------------------------------------------------------------ */
 function getInitials(name: string | null | undefined): string {
   if (!name) return "?";
   return name
@@ -58,63 +49,51 @@ function getInitials(name: string | null | undefined): string {
     .slice(0, 2);
 }
 
-/* ------------------------------------------------------------------ */
-/* Sidebar                                                             */
-/* ------------------------------------------------------------------ */
-export default function Sidebar() {
+export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const { data: session } = useSession();
-
   const userId = session?.user?.id;
 
-  /** Check whether a nav item is currently active. */
   function isActive(href: string): boolean {
     if (href === "/dashboard") return pathname === "/dashboard";
     return pathname === href || pathname.startsWith(`${href}/`);
   }
 
+  const linkClass = (active: boolean) =>
+    cn(
+      "group flex items-center gap-3 rounded-md py-2.5 pl-[9px] pr-3 text-[13px] font-medium transition-colors duration-150",
+      active
+        ? "border-l-[3px] border-primary bg-surface-2 text-primary"
+        : "border-l-[3px] border-transparent text-text-muted hover:bg-surface-2 hover:text-text"
+    );
+
   return (
     <aside
-      className="flex flex-col justify-between"
-      style={{
-        width: 240,
-        minWidth: 240,
-        height: "100vh",
-        backgroundColor: "#10131E",
-        borderRight: "1px solid #1E2533",
-      }}
+      className="flex h-dvh w-60 min-w-60 flex-col justify-between border-r border-border bg-surface"
     >
       {/* ── Top: brand + nav ── */}
-      <div>
-        {/* Brand */}
+      <div className="min-h-0 overflow-y-auto">
         <Link
           href="/dashboard"
+          onClick={onNavigate}
           className="flex items-center gap-2.5 px-5 py-5"
         >
-          <BoltIcon className="text-[#22D3EE]" />
-          <span
-            className="text-lg font-bold tracking-tight"
-            style={{ fontFamily: "'Syne', sans-serif", color: "#E2E8F0" }}
-          >
+          <Logo />
+          <span className="font-heading text-lg font-bold tracking-tight text-text">
             SkillSync
           </span>
         </Link>
 
-        {/* Nav */}
         <nav className="mt-2 flex flex-col gap-0.5 px-3">
           {navItems.map((item) => {
-            const active = isActive(item.href);
             const Icon = item.icon;
+            const active = isActive(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={cn(
-                  "group flex items-center gap-3 rounded-md px-3 py-2.5 text-[13px] font-medium transition-colors duration-150",
-                  active
-                    ? "border-l-[3px] border-[#22D3EE] bg-[#161A28] text-[#22D3EE] pl-[9px]"
-                    : "border-l-[3px] border-transparent text-[#94A3B8] hover:bg-[#161A28] hover:text-[#CBD5E1] pl-[9px]"
-                )}
+                onClick={onNavigate}
+                className={linkClass(active)}
               >
                 <Icon size={18} strokeWidth={active ? 2.2 : 1.8} />
                 {item.label}
@@ -122,16 +101,11 @@ export default function Sidebar() {
             );
           })}
 
-          {/* Profile link (depends on userId) */}
           {userId && (
             <Link
               href={`/profile/${userId}`}
-              className={cn(
-                "group flex items-center gap-3 rounded-md px-3 py-2.5 text-[13px] font-medium transition-colors duration-150",
-                pathname.startsWith("/profile")
-                  ? "border-l-[3px] border-[#22D3EE] bg-[#161A28] text-[#22D3EE] pl-[9px]"
-                  : "border-l-[3px] border-transparent text-[#94A3B8] hover:bg-[#161A28] hover:text-[#CBD5E1] pl-[9px]"
-              )}
+              onClick={onNavigate}
+              className={linkClass(pathname.startsWith("/profile"))}
             >
               <User
                 size={18}
@@ -145,60 +119,46 @@ export default function Sidebar() {
 
       {/* ── Bottom: CTA + user ── */}
       <div className="px-3 pb-4">
-        {/* Start a Project CTA */}
         <Link
           href="/projects/create"
-          className="flex w-full items-center justify-center gap-2 rounded-md px-3 py-2.5 text-sm font-semibold transition-colors duration-150 hover:opacity-90"
-          style={{ backgroundColor: "#F59E0B", color: "#0A0C14" }}
+          onClick={onNavigate}
+          className="flex w-full items-center justify-center gap-2 rounded-md bg-accent px-3 py-2.5 text-sm font-semibold text-accent-foreground transition-all hover:bg-accent/85 hover:shadow-[0_0_20px_-6px_var(--accent)]"
         >
           <Plus size={16} strokeWidth={2.5} />
-          Start a Project
+          New Project
         </Link>
 
-        {/* Separator */}
-        <div className="my-3 h-px" style={{ backgroundColor: "#1E2533" }} />
+        <div className="my-3 h-px bg-border" />
 
-        {/* User info + logout */}
         <div className="flex items-center gap-3">
-          {/* Avatar */}
           {session?.user?.image ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={session.user.image}
               alt={session.user.name ?? "Avatar"}
-              className="h-8 w-8 rounded-full object-cover"
+              className="size-8 rounded-full object-cover"
             />
           ) : (
-            <div
-              className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold"
-              style={{ backgroundColor: "#22D3EE", color: "#0A0C14" }}
-            >
+            <div className="grid size-8 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
               {getInitials(session?.user?.name)}
             </div>
           )}
 
-          {/* Name + domain */}
-          <div className="flex-1 min-w-0">
-            <p
-              className="truncate text-sm font-medium"
-              style={{ color: "#E2E8F0" }}
-            >
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium text-text">
               {session?.user?.name ?? "User"}
             </p>
             {session?.user?.primaryDomain && (
-              <p
-                className="truncate text-xs"
-                style={{ color: "#64748B" }}
-              >
+              <p className="truncate text-xs text-text-muted">
                 {session.user.primaryDomain}
               </p>
             )}
           </div>
 
-          {/* Logout */}
           <button
+            type="button"
             onClick={() => signOut({ callbackUrl: "/login" })}
-            className="rounded-md p-1.5 transition-colors duration-150 hover:bg-[#161A28]"
-            style={{ color: "#64748B" }}
+            className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-surface-2 hover:text-text"
             aria-label="Sign out"
           >
             <LogOut size={16} />
