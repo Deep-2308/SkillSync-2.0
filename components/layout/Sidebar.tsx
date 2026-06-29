@@ -35,7 +35,6 @@ function Logo({ className }: { className?: string }) {
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Prove a Skill", href: "/skills/prove", icon: Zap },
-  { label: "My Projects", href: "/projects/my", icon: FolderOpen },
   { label: "Discover Projects", href: "/projects/discover", icon: Compass },
 ];
 

@@ -9,9 +9,9 @@ function numberFromEnv(raw: string | undefined, fallback: number): number {
 }
 
 export const AI_CONFIG = {
-  model: process.env.ANTHROPIC_MODEL?.trim() || "claude-haiku-4-5-20251001",
-  temperature: numberFromEnv(process.env.ANTHROPIC_TEMPERATURE, 0.85),
-  maxTokens: numberFromEnv(process.env.ANTHROPIC_MAX_TOKENS, 900),
+  model: process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash",
+  temperature: numberFromEnv(process.env.GEMINI_TEMPERATURE, 0.85),
+  maxTokens: numberFromEnv(process.env.GEMINI_MAX_TOKENS, 1500),
 } as const;
 
 /** Transport-level settings for the Anthropic client. */

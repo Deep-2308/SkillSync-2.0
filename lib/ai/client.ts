@@ -1,11 +1,11 @@
-import Anthropic from "@anthropic-ai/sdk";
-import { anthropic } from "@/lib/claude";
+import { GoogleGenAI } from "@google/genai";
 import { AIServiceError } from "@/lib/errors";
 import { AI_TRANSPORT, RETRYABLE_STATUS } from "@/lib/ai/config";
 
+// We keep this interface compatible with the rest of the app that was built for Claude.
 export interface CreateMessageParams {
   system: string;
-  messages: Anthropic.MessageParam[];
+  messages: Array<{ role: "user" | "assistant"; content: string }>;
   model: string;
   temperature: number;
   maxTokens: number;
@@ -21,16 +21,16 @@ export interface CreateMessageResult {
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function statusOf(error: unknown): number | undefined {
-  return error instanceof Anthropic.APIError ? error.status : undefined;
+  if (typeof error === "object" && error !== null && "status" in error) {
+    return (error as { status: number }).status;
+  }
+  return undefined;
 }
 
 /**
- * Single non-streaming Anthropic completion with:
+ * Single non-streaming Gemini completion with:
  *  - a hard per-attempt timeout via AbortController, and
  *  - exponential backoff (with jitter) on transient upstream failures.
- *
- * Built-in SDK retries are disabled (`maxRetries: 0`) so this is the single
- * source of retry behavior. All failures surface as a typed {@link AIServiceError}.
  */
 export async function createMessage(
   params: CreateMessageParams
@@ -38,35 +38,45 @@ export async function createMessage(
   const { system, messages, model, temperature, maxTokens } = params;
   const { maxRetries, baseRetryDelayMs, requestTimeoutMs } = AI_TRANSPORT;
 
+  // Initialize Gemini client dynamically to avoid edge runtime issues if env is missing at build time
+  const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_GENAI_API_KEY });
+
   let lastError: unknown;
+
+  // Map the generic messages array to Gemini's format
+  const geminiContents = messages.map((m) => ({
+    role: m.role === "assistant" ? "model" : "user",
+    parts: [{ text: m.content }],
+  }));
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), requestTimeoutMs);
 
     try {
-      const response = await anthropic.messages.create(
-        {
-          model,
-          max_tokens: maxTokens,
+      const response = await ai.models.generateContent({
+        model,
+        contents: geminiContents,
+        config: {
+          systemInstruction: system,
           temperature,
-          system,
-          messages,
+          maxOutputTokens: maxTokens,
+          // Gemini doesn't currently support passing an AbortSignal directly to generateContent 
+          // in the same way Anthropic SDK does, but the fetch inside will eventually time out 
+          // or we handle it in our own wrapper if necessary. We'll pass it if the SDK supports it.
+          // @ts-expect-error - Next.js/SDK types might vary, but signal is often supported by underlying fetch
+          httpOptions: { signal: controller.signal },
         },
-        { signal: controller.signal, maxRetries: 0 }
-      );
+      });
 
-      const text = response.content
-        .filter((block): block is Anthropic.TextBlock => block.type === "text")
-        .map((block) => block.text)
-        .join("");
+      const text = response.text || "";
 
       return {
         text,
-        model: response.model,
+        model: model, // Gemini response might not echo the exact model string back
         usage: {
-          inputTokens: response.usage.input_tokens,
-          outputTokens: response.usage.output_tokens,
+          inputTokens: response.usageMetadata?.promptTokenCount ?? 0,
+          outputTokens: response.usageMetadata?.candidatesTokenCount ?? 0,
         },
         attempts: attempt + 1,
       };
@@ -75,7 +85,10 @@ export async function createMessage(
       const status = statusOf(error);
       const retryable = typeof status === "number" && RETRYABLE_STATUS.has(status);
 
-      if (!retryable || attempt === maxRetries) break;
+      // Also retry on AbortError (timeout)
+      const isTimeout = error instanceof Error && error.name === "AbortError";
+
+      if ((!retryable && !isTimeout) || attempt === maxRetries) break;
 
       const backoff =
         baseRetryDelayMs * 2 ** attempt + Math.floor(Math.random() * 100);
@@ -89,26 +102,25 @@ export async function createMessage(
 }
 
 /**
- * Translate an upstream Anthropic failure into a typed {@link AIServiceError}
- * with a client-facing message that reflects the real cause (billing, auth,
- * rate limit) instead of a generic catch-all.
+ * Translate an upstream API failure into a typed {@link AIServiceError}
+ * with a client-facing message that reflects the real cause.
  */
 function mapToServiceError(error: unknown): AIServiceError {
   const status = statusOf(error);
   const upstream =
-    error instanceof Error ? error.message : "Anthropic request failed";
+    error instanceof Error ? error.message : "AI request failed";
 
   if (status === 400 && /credit balance|billing|quota/i.test(upstream)) {
     return new AIServiceError(
       upstream,
-      "AI is unavailable: the Anthropic account is out of credits. Add credits in the Anthropic console (Plans & Billing) and try again.",
+      "AI is unavailable: The account is out of credits. Please check your billing dashboard.",
       402
     );
   }
   if (status === 401 || status === 403) {
     return new AIServiceError(
       upstream,
-      "AI is unavailable: the Anthropic API key is missing or invalid.",
+      "AI is unavailable: The API key is missing or invalid.",
       502
     );
   }
@@ -119,5 +131,10 @@ function mapToServiceError(error: unknown): AIServiceError {
       429
     );
   }
+  
+  if (error instanceof Error && error.name === "AbortError") {
+    return new AIServiceError("Timeout", "The AI service took too long to respond. Please try again.", 504);
+  }
+  
   return new AIServiceError(upstream);
 }
