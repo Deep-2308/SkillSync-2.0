@@ -19,6 +19,7 @@ import dbConnect from "@/lib/mongodb";
 import Badge from "@/models/Badge";
 import Project from "@/models/Project";
 import User from "@/models/User";
+import { StaggerContainer } from "@/components/shared/StaggerContainer";
 import type { Difficulty } from "@/models/Badge";
 import type { ProjectStatus } from "@/models/Project";
 
@@ -119,7 +120,7 @@ export default async function DashboardPage() {
       </header>
 
       {/* Stats */}
-      <section className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+      <StaggerContainer className="grid grid-cols-1 gap-5 sm:grid-cols-3">
         <StatCard
           label="Verified Badges"
           value={badgeCount}
@@ -138,7 +139,7 @@ export default async function DashboardPage() {
           icon={<Gauge className="size-5" />}
           tone="text-ai bg-ai/10"
         />
-      </section>
+      </StaggerContainer>
 
       {/* Skill Passport */}
       <section className="space-y-4">

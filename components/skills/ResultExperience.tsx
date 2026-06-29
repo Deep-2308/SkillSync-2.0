@@ -341,14 +341,29 @@ function BadgeCard({
       {/* gradient border wrapper */}
       <motion.div
         initial={reduce ? { scale: 1, opacity: 1 } : { scale: 0.6, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 200, damping: 18, delay: 0.25 }}
-        className="rounded-3xl bg-[linear-gradient(135deg,#5eead4,#22d3ee,#0891b2)] p-px"
-        style={{
+        animate={{
+          scale: 1,
+          opacity: 1,
           boxShadow: reduce
             ? undefined
-            : "0 0 40px color-mix(in oklab, var(--primary) 40%, transparent)",
+            : [
+                "0 0 0px color-mix(in oklab, var(--primary) 0%, transparent)",
+                "0 0 44px color-mix(in oklab, var(--primary) 45%, transparent)",
+                "0 0 18px color-mix(in oklab, var(--primary) 22%, transparent)",
+              ],
         }}
+        transition={{
+          scale: { type: "spring", stiffness: 200, damping: 18, delay: 0.25 },
+          opacity: { duration: 0.3, delay: 0.25 },
+          boxShadow: {
+            duration: 1.4,
+            times: [0, 0.5, 1],
+            repeat: 2,
+            ease: "easeInOut",
+            delay: 0.5,
+          },
+        }}
+        className="rounded-3xl bg-[linear-gradient(135deg,#5eead4,#22d3ee,#0891b2)] p-px"
       >
         <div className="relative overflow-hidden rounded-[calc(1.5rem-1px)] bg-surface p-7 text-center">
           {/* rotated VERIFIED watermark */}
