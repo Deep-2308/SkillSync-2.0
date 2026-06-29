@@ -76,7 +76,7 @@ export function ProfileExperience({
   const container: Variants = {
     hidden: {},
     show: {
-      transition: { staggerChildren: reduce ? 0 : 0.06, delayChildren: 0.04 },
+      transition: { staggerChildren: reduce ? 0 : 0.08, delayChildren: 0.04 },
     },
   };
   const item: Variants = {
