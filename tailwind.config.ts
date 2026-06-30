@@ -93,9 +93,9 @@ const config: Config = {
         },
       },
       fontFamily: {
-        heading: ["var(--font-syne)", "ui-sans-serif", "system-ui", "sans-serif"],
-        sans: ["var(--font-geist-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
-        mono: ["var(--font-geist-mono)", "ui-monospace", "monospace"],
+        heading: ["var(--font-outfit)", "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ["var(--font-plus-jakarta)", "ui-sans-serif", "system-ui", "sans-serif"],
+        mono: ["ui-monospace", "monospace"],
       },
       borderRadius: {
         sm: "calc(var(--radius) * 0.6)",
