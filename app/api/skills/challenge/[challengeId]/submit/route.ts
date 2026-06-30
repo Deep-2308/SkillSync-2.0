@@ -23,7 +23,7 @@ import { logger } from "@/lib/logger";
 const ENDPOINT = "POST /api/skills/challenge/[challengeId]/submit";
 
 // Quality matters for evaluation, so override the (cheaper) generation model.
-const EVAL_MODEL = "claude-sonnet-4-6";
+const EVAL_MODEL = "gemini-2.5-flash";
 const EVAL_TEMPERATURE = 0.2;
 const EVAL_MAX_TOKENS = 700;
 
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
     const { textContent, url } = parsed.data;
 
-    // 3 + 4. PROMPT + CLAUDE CALL (sonnet, low temperature for consistency).
+    // 3 + 4. PROMPT + AI CALL (flash, low temperature for consistency).
     const system = buildEvaluationSystemPrompt({
       domain: challenge.domain,
       difficulty: challenge.difficulty,

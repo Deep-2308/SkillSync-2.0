@@ -1,20 +1,15 @@
 import { NextRequest } from "next/server";
-import { GoogleGenAI } from "@google/genai";
 import { z } from "zod";
 
 import { auth } from "@/auth";
 import { parseAIResponse } from "@/lib/ai/parse";
+import { createMessage } from "@/lib/ai/client";
 import { successResponse, handleApiError } from "@/lib/api/responses";
 import { UnauthorizedError, AppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 
 const ENDPOINT = "POST /api/projects/analyze";
 const GEMINI_MODEL = "gemini-2.5-flash";
-
-// The other two agents run on Anthropic; the project analyzer runs on Google
-// Gemini to demonstrate a provider-agnostic, multi-AI architecture.
-const GEMINI_API_KEY =
-  process.env.GOOGLE_GENAI_API_KEY ?? process.env.GEMINI_API_KEY;
 
 // ─── Input ───────────────────────────────────────────────────────────────────
 const inputSchema = z.object({
@@ -95,34 +90,24 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { title, description, ownerRole } = inputSchema.parse(body);
 
-    if (!GEMINI_API_KEY) {
-      throw new GeminiServiceError("Missing GOOGLE_GENAI_API_KEY");
-    }
-
-    // 3. GEMINI CALL
-    const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+    // 3. AI SERVICE CALL
     const prompt = buildAnalyzePrompt(title, description, ownerRole);
 
     const aiStartedAt = Date.now();
     let text: string | undefined;
+    let ai;
     try {
-      const response = await ai.models.generateContent({
+      ai = await createMessage({
         model: GEMINI_MODEL,
-        contents: prompt,
-        config: {
-          temperature: 0.5,
-          maxOutputTokens: 2048,
-          // gemini-2.5-flash is a "thinking" model: without this it spends the
-          // whole token budget on internal reasoning and truncates the JSON.
-          thinkingConfig: { thinkingBudget: 0 },
-          // Force a clean JSON body (no markdown fences / prose).
-          responseMimeType: "application/json",
-        },
+        system: "",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.5,
+        maxTokens: 2048,
       });
-      text = response.text;
-    } catch (geminiError) {
+      text = ai.text;
+    } catch (aiError) {
       throw new GeminiServiceError(
-        geminiError instanceof Error ? geminiError.message : "Gemini call failed"
+        aiError instanceof Error ? aiError.message : "AI call failed"
       );
     }
     const aiLatencyMs = Date.now() - aiStartedAt;

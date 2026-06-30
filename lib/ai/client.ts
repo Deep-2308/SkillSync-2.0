@@ -2,7 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 import { AIServiceError } from "@/lib/errors";
 import { AI_TRANSPORT, RETRYABLE_STATUS } from "@/lib/ai/config";
 
-// We keep this interface compatible with the rest of the app that was built for Claude.
+// Provide a generic interface for creating messages
 export interface CreateMessageParams {
   system: string;
   messages: Array<{ role: "user" | "assistant"; content: string }>;
@@ -61,9 +61,6 @@ export async function createMessage(
           systemInstruction: system,
           temperature,
           maxOutputTokens: maxTokens,
-          // Gemini doesn't currently support passing an AbortSignal directly to generateContent 
-          // in the same way Anthropic SDK does, but the fetch inside will eventually time out 
-          // or we handle it in our own wrapper if necessary. We'll pass it if the SDK supports it.
           // @ts-expect-error - Next.js/SDK types might vary, but signal is often supported by underlying fetch
           httpOptions: { signal: controller.signal },
         },
