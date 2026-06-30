@@ -61,6 +61,9 @@ export async function createMessage(
           systemInstruction: system,
           temperature,
           maxOutputTokens: maxTokens,
+          responseMimeType: "application/json",
+          // Flash defaults to thinking, which can cause JSON truncation or prose.
+          thinkingConfig: { thinkingBudget: 0 },
           // @ts-expect-error - Next.js/SDK types might vary, but signal is often supported by underlying fetch
           httpOptions: { signal: controller.signal },
         },
