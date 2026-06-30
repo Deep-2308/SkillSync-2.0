@@ -1,5 +1,5 @@
 /**
- * Anthropic generation settings, sourced from the environment with safe
+ * Gemini generation settings, sourced from the environment with safe
  * defaults that preserve the previously hard-coded behavior.
  */
 function numberFromEnv(raw: string | undefined, fallback: number): number {
@@ -14,11 +14,11 @@ export const AI_CONFIG = {
   maxTokens: numberFromEnv(process.env.GEMINI_MAX_TOKENS, 1500),
 } as const;
 
-/** Transport-level settings for the Anthropic client. */
+/** Transport-level settings for the Gemini client. */
 export const AI_TRANSPORT = {
-  requestTimeoutMs: numberFromEnv(process.env.ANTHROPIC_TIMEOUT_MS, 15_000),
-  maxRetries: numberFromEnv(process.env.ANTHROPIC_MAX_RETRIES, 3),
-  baseRetryDelayMs: numberFromEnv(process.env.ANTHROPIC_RETRY_BASE_MS, 500),
+  requestTimeoutMs: numberFromEnv(process.env.GEMINI_TIMEOUT_MS, 15_000),
+  maxRetries: numberFromEnv(process.env.GEMINI_MAX_RETRIES, 3),
+  baseRetryDelayMs: numberFromEnv(process.env.GEMINI_RETRY_BASE_MS, 500),
 } as const;
 
 /** HTTP statuses worth retrying with backoff. */
