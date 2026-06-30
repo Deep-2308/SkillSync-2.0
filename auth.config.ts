@@ -21,6 +21,7 @@ export default {
       allowDangerousEmailAccountLinking: true,
     }),
   ],
+  basePath: "/api/auth",
   pages: {
     signIn: "/login",
   },
