@@ -2,14 +2,12 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 
 import { auth } from "@/auth";
-import { parseAIResponse } from "@/lib/ai/parse";
-import { createMessage } from "@/lib/ai/client";
+import { runAICompletion } from "@/lib/ai/orchestrator";
 import { successResponse, handleApiError } from "@/lib/api/responses";
 import { UnauthorizedError, AppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 
 const ENDPOINT = "POST /api/projects/analyze";
-const GEMINI_MODEL = "gemini-2.5-flash";
 
 // ─── Input ───────────────────────────────────────────────────────────────────
 const inputSchema = z.object({
@@ -36,12 +34,7 @@ const analysisSchema = z.object({
   roles: z.array(roleSchema).min(2).max(8),
 });
 
-/** Raised when the Gemini call itself fails (network/timeout/upstream). */
-class GeminiServiceError extends AppError {
-  constructor(message = "Gemini request failed") {
-    super(500, { error: "Failed to analyze project" }, message);
-  }
-}
+
 
 function buildAnalyzePrompt(
   title: string,
@@ -93,36 +86,24 @@ export async function POST(request: NextRequest) {
     // 3. AI SERVICE CALL
     const prompt = buildAnalyzePrompt(title, description, ownerRole);
 
-    const aiStartedAt = Date.now();
-    let text: string | undefined;
-    let ai;
-    try {
-      ai = await createMessage({
-        model: GEMINI_MODEL,
-        system: "",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.5,
-        maxTokens: 2048,
-      });
-      text = ai.text;
-    } catch (aiError) {
-      throw new GeminiServiceError(
-        aiError instanceof Error ? aiError.message : "AI call failed"
-      );
-    }
-    const aiLatencyMs = Date.now() - aiStartedAt;
-
-    if (!text) throw new GeminiServiceError("Empty response from Gemini");
-
-    // 4. PARSE + VALIDATE (AIResponseError -> 500 via handleApiError)
-    const analysis = parseAIResponse(text, analysisSchema);
+    const analysis = await runAICompletion({
+      task: "project-analysis",
+      request: {
+        systemPrompt: "",
+        userPrompt: prompt,
+      },
+      schema: analysisSchema,
+      semanticValidator: (data) => {
+        if (!data.roles || data.roles.length < 2) {
+          throw new Error("Project must have at least 2 roles");
+        }
+      }
+    });
 
     logger.info("project.analyze.success", {
       endpoint: ENDPOINT,
       userId,
-      model: GEMINI_MODEL,
       latencyMs: Date.now() - startedAt,
-      aiLatencyMs,
       success: true,
     });
 
@@ -137,7 +118,6 @@ export async function POST(request: NextRequest) {
     logger.error("project.analyze.failure", {
       endpoint: ENDPOINT,
       userId,
-      model: GEMINI_MODEL,
       latencyMs: Date.now() - startedAt,
       success: false,
       errorName: error instanceof Error ? error.name : "Unknown",

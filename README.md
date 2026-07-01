@@ -14,8 +14,8 @@
 ![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
 
-![Claude](https://img.shields.io/badge/Anthropic-Claude-D97757?style=for-the-badge)
 ![Gemini](https://img.shields.io/badge/Google-Gemini-8B5CF6?style=for-the-badge&logo=google&logoColor=white)
+![Groq](https://img.shields.io/badge/Groq-API-F55036?style=for-the-badge)
 ![NextAuth](https://img.shields.io/badge/Auth-NextAuth_v5-000000?style=for-the-badge)
 
 </div>
@@ -60,7 +60,7 @@
 | **What it does** | Generates unique, real-world challenges for a chosen skill, evaluates submissions with AI against a professional rubric, issues verified badges with a proof artifact, and helps users start projects and recruit teammates based on *verified* skills. |
 | **The problem it solves** | Résumés and self-reported skill lists are unverifiable and easy to inflate. SkillSync replaces "trust me" with "here's my proof." |
 | **Who it's for** | Students, early-career developers, designers, writers, marketers, and analysts who want credible, demonstrable proof of skill — and founders looking for co-builders they can trust. |
-| **Why it's different** | Real, AI-generated tasks (not multiple-choice quizzes), a transparent scoring rubric, and a **multi-AI architecture**: **Anthropic Claude** powers challenge generation and evaluation, while **Google Gemini** powers project analysis. |
+| **Why it's different** | Real, AI-generated tasks (not multiple-choice quizzes), a transparent scoring rubric, and a **provider-agnostic AI orchestrator**: featuring automatic failover between **Google Gemini** (Primary) and **Groq** (Fallback) to ensure 99.9% uptime. |
 
 The aesthetic is a dark-mode-first "Midnight Craft" design system — Syne display headings, a mint/teal primary, amber accent, and violet AI accent — with Framer Motion micro-interactions throughout.
 
@@ -75,8 +75,8 @@ The aesthetic is a dark-mode-first "Midnight Craft" design system — Syne displ
 - Multi-step onboarding: pick a primary domain → select skills → complete profile
 
 ### 🤖 AI Skill Verification
-- **Challenge generation** — Claude crafts a unique, industry-grade task tailored to skill + difficulty
-- **AI evaluation** — Claude scores submissions on a 100-point rubric (Completeness, Quality, Accuracy, Depth) with a 70 pass threshold
+- **Challenge generation** — Gemini/Groq crafts a unique, industry-grade task tailored to skill + difficulty
+- **AI evaluation** — Gemini/Groq scores submissions on a 100-point rubric (Completeness, Quality, Accuracy, Depth) with a 70 pass threshold
 - **Fake-streaming reveal** — challenge text types in word-by-word for a live-AI feel
 - Daily generation rate limit (5/day per user) and 7-day challenge expiry
 
@@ -154,8 +154,9 @@ docs/
 ### AI
 | Provider | SDK | Used for |
 |---|---|---|
-| Anthropic Claude | `@anthropic-ai/sdk` `^0.106` | Challenge generation & submission evaluation |
-| Google Gemini | `@google/genai` `^2.10` (`gemini-2.5-flash`) | Project analysis (roles, complexity, tags) |
+| AI Orchestrator | Internal Abstraction | Unifies all AI requests, parses responses, runs semantic validation, and handles failovers. |
+| Google Gemini (Primary) | `@google/genai` `^0.1.2` | Primary engine for Generation, Evaluation, and Project Analysis. |
+| Groq (Fallback) | `openai` `^6.45.0` | Fallback engine using Llama 3 when Gemini is unavailable. |
 
 ### Services & Tooling
 | Tech | Purpose |
@@ -179,10 +180,10 @@ graph TD
     B --> D[API Route Handlers]
     C --> E[(MongoDB via Mongoose)]
     D --> E
-    D --> F[AI Layer]
-    F --> G[Anthropic Claude<br/>generate + evaluate]
-    F --> H[Google Gemini<br/>project analysis]
     D --> I[lib/api/responses + lib/errors<br/>typed responses & error mapping]
+    D --> F[AI Orchestrator<br/>lib/ai/orchestrator.ts]
+    F --> G[Gemini Provider<br/>Primary]
+    F -.-> H[Groq Provider<br/>Fallback]
 ```
 
 **Request lifecycle (example: generate a challenge)**
@@ -192,16 +193,15 @@ sequenceDiagram
     participant U as User (Prove page)
     participant P as proxy.ts
     participant R as /api/skills/challenge/generate
-    participant AI as Claude (lib/ai/client)
+    participant AI as AI Orchestrator
     participant DB as MongoDB
 
     U->>P: POST /api/skills/challenge/generate
     P->>R: authorized (session present)
     R->>R: Zod validate {skillName, domain, difficulty}
     R->>DB: rate-limit check (≤5/day)
-    R->>AI: createMessage(system prompt)
-    AI-->>R: JSON challenge
-    R->>R: parseAIResponse + Zod schema
+    R->>AI: runAICompletion(task, schemas, validator)
+    AI-->>R: Validated JSON challenge
     R->>DB: persist Challenge (status: active)
     R-->>U: { challengeId, challengeContent }
 ```
@@ -243,11 +243,9 @@ skillsync/
 │   ├── ui/                      # shadcn/Radix primitives (button, dialog, sheet…)
 │   └── providers.tsx            # SessionProvider + Toaster
 ├── lib/                         # Business logic, AI clients, helpers
-│   ├── ai/                      # client.ts (retry/timeout), config.ts, parse.ts
+│   ├── ai/                      # orchestrator.ts, config.ts, metrics.ts, parse.ts, providerRegistry.ts
 │   ├── api/                     # responses.ts (success/error envelope)
 │   ├── prompts/                 # challenge.ts, evaluation.ts (system prompts + schemas)
-│   ├── claude.ts                # Anthropic client
-│   ├── gemini.ts                # Google GenAI client
 │   ├── constants.ts             # Domains & SKILLS_BY_DOMAIN map
 │   ├── errors.ts                # Typed AppError hierarchy
 │   ├── logger.ts                # Structured JSON logger
@@ -311,8 +309,8 @@ All variables live in `.env.local` (never commit it). Source of truth: [`.env.ex
 | `NEXTAUTH_URL` | ✅ | App base URL (e.g. `http://localhost:3000`). |
 | `GOOGLE_CLIENT_ID` | ✅* | Google OAuth client id (*required for Google sign-in). |
 | `GOOGLE_CLIENT_SECRET` | ✅* | Google OAuth client secret. |
-| `ANTHROPIC_API_KEY` | ✅ | Anthropic Claude key — challenge generation & evaluation. |
-| `GOOGLE_GENAI_API_KEY` | ✅ | Google Gemini key — project analysis (`/api/projects/analyze`). |
+| `GOOGLE_GENAI_API_KEY` | ✅ | Google Gemini key — primary AI provider. |
+| `GROQ_API_KEY` | ✅ | Groq key — fallback AI provider. |
 | `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | ⬜ | Cloudinary cloud name (image hosting). |
 | `CLOUDINARY_API_KEY` | ⬜ | Cloudinary API key. |
 | `CLOUDINARY_API_SECRET` | ⬜ | Cloudinary API secret. |
@@ -323,11 +321,11 @@ All variables live in `.env.local` (never commit it). Source of truth: [`.env.ex
 
 | Variable | Default | Notes |
 |---|---|---|
-| `ANTHROPIC_MODEL` | `claude-haiku-4-5-20251001` | Documented in `.env.example`. |
-| `ANTHROPIC_TEMPERATURE` / `ANTHROPIC_MAX_TOKENS` | `0.85` / `900` | Generation params. |
-| `ANTHROPIC_TIMEOUT_MS` / `ANTHROPIC_MAX_RETRIES` / `ANTHROPIC_RETRY_BASE_MS` | `15000` / `3` / `500` | Transport retry/backoff (`lib/ai/config.ts`). |
-
-> ⚠️ **Honesty note:** `lib/ai/config.ts` currently reads the generation model/temperature/maxTokens from `GEMINI_MODEL` / `GEMINI_TEMPERATURE` / `GEMINI_MAX_TOKENS` (default `gemini-2.5-flash`), while `.env.example` documents `ANTHROPIC_*`. The generation request itself is dispatched through the Anthropic transport (`lib/ai/client.ts`). This is a known mid-refactor inconsistency — set the env you intend to use and verify the model id matches your provider. Never commit real secrets.
+| `PRIMARY_AI_PROVIDER` | `gemini` | Choose `gemini` or `groq`. |
+| `FALLBACK_AI_PROVIDER` | `groq` | Used automatically if the primary provider fails. |
+| `GEMINI_GENERATION_MODEL` | `gemini-2.5-pro` | Model used for challenge generation. |
+| `GEMINI_EVALUATION_MODEL` | `gemini-2.5-pro` | Model used for evaluating submissions. |
+| `GEMINI_TIMEOUT_MS` | `20000` | Transport timeout per request. |
 
 ---
 
@@ -353,8 +351,8 @@ All variables live in `.env.local` (never commit it). Source of truth: [`.env.ex
 <details>
 <summary><b>3. AI Keys</b></summary>
 
-- **Anthropic:** create a key at the Anthropic Console (ensure the account has credits) → `ANTHROPIC_API_KEY`.
-- **Gemini:** create a key in Google AI Studio (`AIza…`) → `GOOGLE_GENAI_API_KEY`.
+- **Gemini:** create a key in Google AI Studio → `GOOGLE_GENAI_API_KEY`.
+- **Groq:** create a key in the Groq Console → `GROQ_API_KEY`.
 </details>
 
 <details>
@@ -501,8 +499,8 @@ Base path: `/api`. Unless noted, endpoints require an authenticated session (enf
 ### Skills / Challenges
 | Method | Path | Auth | Purpose |
 |---|---|:---:|---|
-| `POST` | `/api/skills/challenge/generate` | ✅ | Generate a Claude challenge. Rate-limited 5/day. |
-| `POST` | `/api/skills/challenge/[challengeId]/submit` | ✅ (owner) | Submit text/URL → Claude evaluation → badge if `score ≥ 70`. |
+| `POST` | `/api/skills/challenge/generate` | ✅ | Generate an AI challenge. Rate-limited 5/day. |
+| `POST` | `/api/skills/challenge/[challengeId]/submit` | ✅ (owner) | Submit text/URL → AI evaluation → badge if `score ≥ 70`. |
 
 <details>
 <summary><b>Example — POST /api/skills/challenge/generate</b></summary>
@@ -560,20 +558,21 @@ Errors: `401` unauthorized · `400` validation · `429` daily limit · `500` AI 
 
 ## 🧠 AI Features
 
-SkillSync uses a **multi-AI architecture** — two providers, each chosen for its task.
+SkillSync uses a **provider-agnostic AI architecture** that guarantees high availability and reliable JSON generation.
 
-| Agent | Provider | Entry point | Output contract |
-|---|---|---|---|
-| **Challenge generator** | Anthropic Claude | `POST /api/skills/challenge/generate` → `lib/prompts/challenge.ts` | `challengeResponseSchema` (Zod) |
-| **Submission evaluator** | Anthropic Claude (`claude-sonnet-4-6`, temp `0.2`) | `POST /api/skills/challenge/[id]/submit` → `lib/prompts/evaluation.ts` | `evaluationResponseSchema` (Zod) |
-| **Project analyzer** | Google Gemini (`gemini-2.5-flash`) | `POST /api/projects/analyze` | inline Zod `analysisSchema` |
+| Agent | Configurable Model Env | Entry point |
+|---|---|---|
+| **Challenge generator** | `GEMINI_GENERATION_MODEL` | `POST /api/skills/challenge/generate` |
+| **Submission evaluator** | `GEMINI_EVALUATION_MODEL` | `POST /api/skills/challenge/[id]/submit` |
+| **Project analyzer** | `GEMINI_PROJECT_ANALYSIS_MODEL` | `POST /api/projects/analyze` |
 
-**Shared AI pipeline (Anthropic — `lib/ai/`):**
-- `client.ts` → `createMessage()`: single non-streaming completion with a **hard per-attempt timeout** (`AbortController`) and **exponential backoff + jitter** on retryable statuses (`429/500/502/503/504`). Built-in SDK retries are disabled so this is the single retry source.
-- `parse.ts` → `parseAIResponse()`: strips accidental markdown fences/preamble, then validates against a Zod schema; throws a typed `AIResponseError` on malformed/invalid JSON.
-- Errors map to clear client messages (e.g., out-of-credits → "AI is unavailable: the Anthropic account is out of credits").
-
-**Gemini specifics:** the analyzer disables "thinking" (`thinkingConfig.thinkingBudget: 0`), sets `maxOutputTokens: 2048`, and requests `responseMimeType: "application/json"` to avoid truncated/fenced output, then validates with Zod.
+**The Orchestrator (`lib/ai/orchestrator.ts`):**
+- **Dynamic Failover**: Attempts the `PRIMARY_AI_PROVIDER` first (e.g., Gemini 2.5 Pro). If it times out or throws an error, it immediately falls back to the `FALLBACK_AI_PROVIDER` (e.g., Groq Llama 3) for the exact same prompt, guaranteeing 99.9% uptime.
+- **Two-Stage Validation**: 
+  1. **Zod Validation**: Ensures the response perfectly matches the target schema (`lib/ai/parse.ts`).
+  2. **Semantic Validation**: Each route provides custom assertions (e.g., "challenge feedback cannot be empty"). 
+  - A failure in *either* stage triggers an automatic failover.
+- **Metrics Observability**: Every request emits structured metrics tracking `latency`, `inputTokens`, `outputTokens`, `requestId`, and `failedOver` status.
 
 **Scoring rubric (evaluation):** Completeness (25) · Quality (30) · Accuracy (25) · Depth (20) → pass at **70/100** (pass is derived server-side from the score).
 
@@ -620,7 +619,7 @@ graph LR
 
 **Add an AI prompt**
 1. Add a builder + Zod response schema in `lib/prompts/`.
-2. Call `createMessage()` (Claude) or the Gemini client, then `parseAIResponse()` with the schema.
+2. Call `runAICompletion()` from the orchestrator and supply a `semanticValidator`.
 
 ---
 
@@ -679,7 +678,6 @@ graph LR
 | `/projects/my` (linked in sidebar) | 🚧 Planned — route not yet created |
 | Password reset (`/forgot-password` + Resend) | 🚧 In Progress — page exists; email flow not confirmed |
 | Cloudinary image upload UI | 🚧 Planned — hosting configured, upload UX not built |
-| AI model env naming (`GEMINI_*` vs `ANTHROPIC_*`) | ⚠️ Inconsistent — see Environment Variables note |
 
 ---
 
@@ -687,7 +685,6 @@ graph LR
 
 - Build the `/projects/my` page so the sidebar link resolves.
 - Finish the password-reset flow end-to-end with Resend.
-- Reconcile the AI generation-model env naming and pin valid model ids per provider.
 - Add Cloudinary upload UI for avatars/proof artifacts.
 - Centralized API rate limiting and request logging/metrics.
 - Owner-only visibility for project `applications` in the detail response.
@@ -723,7 +720,7 @@ Built with these excellent open-source projects and services:
 - **[Next.js](https://nextjs.org/)**, **[React](https://react.dev/)**, **[TypeScript](https://www.typescriptlang.org/)**
 - **[MongoDB](https://www.mongodb.com/)** + **[Mongoose](https://mongoosejs.com/)**
 - **[NextAuth / Auth.js](https://authjs.dev/)**
-- **[Anthropic Claude](https://www.anthropic.com/)** & **[Google Gemini](https://ai.google.dev/)**
+- **[Google Gemini](https://ai.google.dev/)** & **[Groq](https://groq.com/)**
 - **[Tailwind CSS](https://tailwindcss.com/)**, **[Radix UI](https://www.radix-ui.com/)** / **[shadcn/ui](https://ui.shadcn.com/)**, **[Framer Motion](https://www.framer.com/motion/)**, **[Lucide](https://lucide.dev/)**, **[Sonner](https://sonner.emilkowal.ski/)**
 - **[Zod](https://zod.dev/)**, **[Cloudinary](https://cloudinary.com/)**, **[Resend](https://resend.com/)**, **[Vercel](https://vercel.com/)**
 

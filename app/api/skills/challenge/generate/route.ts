@@ -3,9 +3,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import dbConnect from "@/lib/mongodb";
 import Challenge from "@/models/Challenge";
-import { AI_CONFIG } from "@/lib/ai/config";
-import { createMessage } from "@/lib/ai/client";
-import { parseAIResponse } from "@/lib/ai/parse";
+import { runAICompletion } from "@/lib/ai/orchestrator";
 import {
   DOMAIN_CONTEXT,
   buildChallengeSystemPrompt,
@@ -69,24 +67,22 @@ export async function POST(request: NextRequest) {
       skillName,
     });
 
-    const aiStartedAt = Date.now();
-    const ai = await createMessage({
-      system,
-      messages: [
-        {
-          role: "user",
-          content:
-            "Generate the challenge now. Respond with the JSON object only.",
-        },
-      ],
-      model: AI_CONFIG.model,
-      temperature: AI_CONFIG.temperature,
-      maxTokens: AI_CONFIG.maxTokens,
+    const challengeContent = await runAICompletion({
+      task: "challenge-generation",
+      request: {
+        systemPrompt: system,
+        userPrompt: "Generate the challenge now. Respond with the JSON object only.",
+      },
+      schema: challengeResponseSchema,
+      semanticValidator: (data) => {
+        if (!data.requirements || data.requirements.length === 0) {
+          throw new Error("Challenge requirements cannot be empty");
+        }
+        if (!data.title || data.title.trim() === "") {
+          throw new Error("Challenge title cannot be empty");
+        }
+      }
     });
-    const aiLatencyMs = Date.now() - aiStartedAt;
-
-    // 6. PARSE + VALIDATE (AIResponseError -> 500 via handleApiError)
-    const challengeContent = parseAIResponse(ai.text, challengeResponseSchema);
 
     // 7. PERSIST
     const challenge = await Challenge.create({
@@ -103,12 +99,7 @@ export async function POST(request: NextRequest) {
     logger.info("challenge.generate.success", {
       endpoint: ENDPOINT,
       userId,
-      model: ai.model,
       latencyMs: Date.now() - startedAt,
-      aiLatencyMs,
-      inputTokens: ai.usage.inputTokens,
-      outputTokens: ai.usage.outputTokens,
-      attempts: ai.attempts,
       success: true,
     });
 
@@ -129,7 +120,6 @@ export async function POST(request: NextRequest) {
     logger.error("challenge.generate.failure", {
       endpoint: ENDPOINT,
       userId,
-      model: AI_CONFIG.model,
       latencyMs: Date.now() - startedAt,
       success: false,
       errorName: error instanceof Error ? error.name : "Unknown",

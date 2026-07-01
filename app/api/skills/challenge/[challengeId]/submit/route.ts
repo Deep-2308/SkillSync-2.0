@@ -5,8 +5,7 @@ import dbConnect from "@/lib/mongodb";
 import Challenge from "@/models/Challenge";
 import Badge from "@/models/Badge";
 import User from "@/models/User";
-import { createMessage } from "@/lib/ai/client";
-import { parseAIResponse } from "@/lib/ai/parse";
+import { runAICompletion } from "@/lib/ai/orchestrator";
 import {
   buildEvaluationSystemPrompt,
   evaluationResponseSchema,
@@ -22,10 +21,6 @@ import { logger } from "@/lib/logger";
 
 const ENDPOINT = "POST /api/skills/challenge/[challengeId]/submit";
 
-// Quality matters for evaluation, so override the (cheaper) generation model.
-const EVAL_MODEL = "gemini-2.5-flash";
-const EVAL_TEMPERATURE = 0.2;
-const EVAL_MAX_TOKENS = 700;
 
 const TOO_SHORT_MESSAGE =
   "Submission too short. Please provide a detailed response (minimum 150 characters).";
@@ -90,24 +85,22 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       url,
     });
 
-    const aiStartedAt = Date.now();
-    const ai = await createMessage({
-      system,
-      messages: [
-        {
-          role: "user",
-          content:
-            "Evaluate the submission now. Respond with the JSON object only.",
-        },
-      ],
-      model: EVAL_MODEL,
-      temperature: EVAL_TEMPERATURE,
-      maxTokens: EVAL_MAX_TOKENS,
+    const evaluation = await runAICompletion({
+      task: "evaluation",
+      request: {
+        systemPrompt: system,
+        userPrompt: "Evaluate the submission now. Respond with the JSON object only.",
+      },
+      schema: evaluationResponseSchema,
+      semanticValidator: (data) => {
+        if (!data.overallFeedback || data.overallFeedback.trim() === "") {
+          throw new Error("Evaluation feedback cannot be empty");
+        }
+        if (data.score < 0 || data.score > 100) {
+          throw new Error("Score must be between 0 and 100");
+        }
+      }
     });
-    const aiLatencyMs = Date.now() - aiStartedAt;
-
-    // 5. PARSE + VALIDATE
-    const evaluation = parseAIResponse(ai.text, evaluationResponseSchema);
     // Trust the rubric total over the model's self-reported boolean.
     const passed = evaluation.score >= 70;
 
@@ -152,12 +145,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     logger.info("challenge.submit.success", {
       endpoint: ENDPOINT,
       userId,
-      model: ai.model,
       latencyMs: Date.now() - startedAt,
-      aiLatencyMs,
-      inputTokens: ai.usage.inputTokens,
-      outputTokens: ai.usage.outputTokens,
-      attempts: ai.attempts,
       success: true,
       passed,
       score: evaluation.score,
@@ -184,7 +172,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     logger.error("challenge.submit.failure", {
       endpoint: ENDPOINT,
       userId,
-      model: EVAL_MODEL,
       latencyMs: Date.now() - startedAt,
       success: false,
       errorName: error instanceof Error ? error.name : "Unknown",

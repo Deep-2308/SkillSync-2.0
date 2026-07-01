@@ -75,10 +75,45 @@ export class AIResponseError extends AppError {
 /** The upstream AI provider failed (after retries) or timed out. */
 export class AIServiceError extends AppError {
   constructor(
-    message = "Anthropic request failed",
-    clientError = "Failed to generate challenge",
+    message = "AI request failed",
+    clientError = "Failed to process AI request",
     status = 500
   ) {
     super(status, { error: clientError }, message);
   }
 }
+
+export class GeminiProviderError extends AIServiceError {
+  constructor(message: string) {
+    super(message, "Gemini provider failed", 502);
+    this.name = "GeminiProviderError";
+  }
+}
+
+export class GroqProviderError extends AIServiceError {
+  constructor(message: string) {
+    super(message, "Groq provider failed", 502);
+    this.name = "GroqProviderError";
+  }
+}
+
+export class AIUnavailableError extends AIServiceError {
+  readonly primaryError?: Error;
+  readonly fallbackError?: Error;
+  
+  constructor(primaryError?: Error, fallbackError?: Error) {
+    super("All AI providers failed", "AI is currently unavailable, please try again later", 503);
+    this.name = "AIUnavailableError";
+    this.primaryError = primaryError;
+    this.fallbackError = fallbackError;
+  }
+}
+
+/** The AI returned a response that passed structural validation but failed semantic checks. */
+export class AISemanticError extends AppError {
+  constructor(message: string) {
+    super(500, { error: "AI response failed semantic validation, please try again" }, message);
+    this.name = "AISemanticError";
+  }
+}
+
