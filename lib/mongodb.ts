@@ -49,7 +49,9 @@ async function dbConnect(): Promise<typeof mongoose> {
     cached.conn = await cached.promise;
   } catch (e) {
     cached.promise = null;
-    throw e;
+    throw new Error(
+      `MongoDB connection failed: ${e instanceof Error ? e.message : String(e)}`
+    );
   }
 
   return cached.conn;
