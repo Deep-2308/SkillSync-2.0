@@ -2,15 +2,15 @@
 
 import { SessionProvider } from "next-auth/react";
 import { Toaster } from "@/components/ui/sonner";
-import { SmoothScrollProvider } from "@/components/shared/smooth-scroll";
+import { ScrollProvider } from "@/components/providers/ScrollProvider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
-      <SmoothScrollProvider>
+      <ScrollProvider>
         {children}
         <Toaster position="top-center" richColors />
-      </SmoothScrollProvider>
+      </ScrollProvider>
     </SessionProvider>
   );
 }
