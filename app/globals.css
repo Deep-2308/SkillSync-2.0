@@ -6,122 +6,164 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  /* shadcn semantic tokens */
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  
-  /* Midnight Craft design tokens (Deep Space & Neon) */
-  --color-surface: var(--surface);
-  --color-surface-2: var(--surface-2);
-  --color-primary-dark: var(--primary-dark);
-  --color-ai: var(--ai);
-  --color-success: var(--success);
-  --color-error: var(--error);
-  --color-text: var(--text);
-  --color-text-muted: var(--text-muted);
+  /* ------------------------------------------------------------------ */
+  /* 1. Global Design Tokens: The Forge                                 */
+  /* ------------------------------------------------------------------ */
+  --color-canvas: #0A0908;
+  --color-paper: #F7F3EC;
+  --color-ember: #FF5A36;
+  --color-ember-dim: #B8391F;
+  --color-proof-violet: #8B7CFF;
+  --color-surface: #141311;
+  --color-surface-border: #2A2822;
+  --color-success: #7FBF6A;
+  --color-obsidian: #050505;
+  --color-steel: #1F1E1B;
 
-  /* fonts - updated to Outfit and Plus Jakarta Sans */
-  --font-heading: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
-  --font-sans: var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif;
+  /* Typography System (Semantic Scale) */
+  --font-display: var(--font-fraunces), ui-serif, serif;
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, monospace;
 
-  /* radius */
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  /* Typographic Roles (Mapped to Tailwind text- utilities) */
+  --text-display-xl: 4.5rem;
+  --text-display-xl-line-height: 1;
+  --text-display-xl-letter-spacing: -0.04em;
+
+  --text-display-lg: 3.75rem;
+  --text-display-lg-line-height: 1;
+  --text-display-lg-letter-spacing: -0.03em;
+
+  --text-display-md: 3rem;
+  --text-display-md-line-height: 1.05;
+  --text-display-md-letter-spacing: -0.02em;
+
+  --text-hero-heading: 2.5rem;
+  --text-hero-heading-line-height: 1.1;
+  --text-hero-heading-letter-spacing: -0.02em;
+
+  --text-page-heading: 2rem;
+  --text-page-heading-line-height: 1.15;
+  --text-page-heading-letter-spacing: -0.01em;
+
+  --text-section-heading: 1.5rem;
+  --text-section-heading-line-height: 1.2;
+  --text-section-heading-letter-spacing: -0.01em;
+
+  --text-card-heading: 1.25rem;
+  --text-card-heading-line-height: 1.3;
+  --text-card-heading-letter-spacing: -0.01em;
+
+  --text-body-large: 1.125rem;
+  --text-body-large-line-height: 1.6;
+
+  --text-body: 1rem;
+  --text-body-line-height: 1.6;
+
+  --text-body-small: 0.875rem;
+  --text-body-small-line-height: 1.5;
+
+  --text-caption: 0.75rem;
+  --text-caption-line-height: 1.4;
+
+  --text-label: 0.75rem;
+  --text-label-line-height: 1;
+  --text-label-letter-spacing: 0.05em;
+
+  --text-button: 0.875rem;
+  --text-button-line-height: 1;
+  --text-button-letter-spacing: 0.01em;
+
+  --text-code: 0.875rem;
+  --text-code-line-height: 1.5;
+
+  /* Motion System */
+  --animate-transition-fast: 150ms;
+  --animate-transition-normal: 250ms;
+  --animate-transition-slow: 400ms;
+  --animate-transition-emphasized: 500ms;
+  --animate-transition-gentle: 600ms;
+  
+  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --ease-hover: cubic-bezier(0.25, 0.1, 0.25, 1);
+
+  /* Elevation System (Z-Index and Shadow) */
+  --shadow-surface: 0 1px 2px 0 rgba(0,0,0,0.4);
+  --shadow-raised-surface: 0 4px 12px -2px rgba(0,0,0,0.5), 0 0 0 1px var(--color-surface-border);
+  --shadow-floating-surface: 0 8px 24px -4px rgba(0,0,0,0.6), 0 0 0 1px var(--color-surface-border);
+  --shadow-overlay-surface: 0 16px 32px -8px rgba(0,0,0,0.7), 0 0 0 1px var(--color-surface-border);
+  --shadow-modal-surface: 0 24px 48px -12px rgba(0,0,0,0.8), 0 0 0 1px var(--color-surface-border);
+  --shadow-popover-surface: 0 8px 16px -4px rgba(0,0,0,0.6), 0 0 0 1px var(--color-surface-border);
+
+  /* Radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+  --radius-4xl: 2rem;
+  --radius-full: 9999px;
+
+  /* ------------------------------------------------------------------ */
+  /* 8. Compatibility Layer (Mapping Shadcn & Old Tokens to Forge)      */
+  /* ------------------------------------------------------------------ */
+  --color-background: var(--color-canvas);
+  --color-foreground: var(--color-paper);
+  --color-card: var(--color-surface);
+  --color-card-foreground: var(--color-paper);
+  --color-popover: var(--color-surface);
+  --color-popover-foreground: var(--color-paper);
+  
+  --color-primary: var(--color-ember);
+  --color-primary-foreground: var(--color-canvas);
+  --color-primary-dark: var(--color-ember-dim);
+  
+  --color-secondary: var(--color-steel);
+  --color-secondary-foreground: var(--color-paper);
+  
+  --color-muted: var(--color-steel);
+  --color-muted-foreground: oklch(0.7 0.03 270); /* temporary fallback grey */
+  
+  --color-accent: var(--color-ember);
+  --color-accent-foreground: var(--color-canvas);
+  
+  --color-destructive: var(--color-ember-dim);
+  --color-border: var(--color-surface-border);
+  --color-input: var(--color-surface-border);
+  --color-ring: var(--color-ember);
+
+  /* Legacy Old Tokens mapping to prevent breakage */
+  --color-surface-2: var(--color-steel);
+  --color-ai: var(--color-proof-violet);
+  --color-text: var(--color-paper);
+  --color-text-muted: oklch(0.7 0.03 270);
 }
 
-/*
- * Deep Space & Neon Aesthetic
- */
-:root {
-  /* Deep Space Palette */
-  --surface: oklch(0.18 0.02 270);
-  --surface-2: oklch(0.23 0.03 270);
-  --primary-dark: oklch(0.65 0.15 210);
-  --ai: oklch(0.65 0.25 310); /* Electric Violet */
-  --success: oklch(0.85 0.18 150); /* Neon Green */
-  --error: oklch(0.6 0.2 20);
-  --text: oklch(0.98 0.01 270);
-  --text-muted: oklch(0.7 0.03 270);
-
-  /* shadcn mappings */
-  --background: oklch(0.13 0.01 270); /* Deep space black */
-  --foreground: var(--text);
-  --card: var(--surface);
-  --card-foreground: var(--text);
-  --popover: var(--surface-2);
-  --popover-foreground: var(--text);
-  
-  --primary: oklch(0.75 0.16 210); /* Electric Cyan */
-  --primary-foreground: oklch(0.13 0.01 270);
-  
-  --secondary: var(--surface-2);
-  --secondary-foreground: var(--text);
-  
-  --muted: var(--surface-2);
-  --muted-foreground: var(--text-muted);
-  
-  --accent: var(--ai);
-  --accent-foreground: oklch(0.98 0 0); /* White on violet */
-  
-  --destructive: var(--error);
-  --border: oklch(0.28 0.03 270);
-  --input: var(--border);
-  --ring: var(--primary);
-
+/* Base definitions */
+:root, .dark {
+  /* Assign CSS variables that components might access directly outside Tailwind */
+  --background: var(--color-canvas);
+  --foreground: var(--color-paper);
+  --card: var(--color-surface);
+  --card-foreground: var(--color-paper);
+  --popover: var(--color-surface);
+  --popover-foreground: var(--color-paper);
+  --primary: var(--color-ember);
+  --primary-foreground: var(--color-canvas);
+  --secondary: var(--color-steel);
+  --secondary-foreground: var(--color-paper);
+  --muted: var(--color-steel);
+  --muted-foreground: oklch(0.7 0.03 270);
+  --accent: var(--color-ember);
+  --accent-foreground: var(--color-canvas);
+  --destructive: var(--color-ember-dim);
+  --border: var(--color-surface-border);
+  --input: var(--color-surface-border);
+  --ring: var(--color-ember);
   --radius: 0.5rem;
-}
-
-.dark {
-  /* We maintain the same values since this is a dark-mode first design */
-  --surface: oklch(0.18 0.02 270);
-  --surface-2: oklch(0.23 0.03 270);
-  --primary-dark: oklch(0.65 0.15 210);
-  --ai: oklch(0.65 0.25 310);
-  --success: oklch(0.85 0.18 150);
-  --error: oklch(0.6 0.2 20);
-  --text: oklch(0.98 0.01 270);
-  --text-muted: oklch(0.7 0.03 270);
-
-  --background: oklch(0.13 0.01 270);
-  --foreground: var(--text);
-  --card: var(--surface);
-  --card-foreground: var(--text);
-  --popover: var(--surface-2);
-  --popover-foreground: var(--text);
-  --primary: oklch(0.75 0.16 210);
-  --primary-foreground: oklch(0.13 0.01 270);
-  --secondary: var(--surface-2);
-  --secondary-foreground: var(--text);
-  --muted: var(--surface-2);
-  --muted-foreground: var(--text-muted);
-  --accent: var(--ai);
-  --accent-foreground: oklch(0.98 0 0);
-  --destructive: var(--error);
-  --border: oklch(0.28 0.03 270);
-  --input: var(--border);
-  --ring: var(--primary);
 }
 
 @layer base {
@@ -134,122 +176,79 @@
   html {
     @apply font-sans;
   }
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    font-family: var(--font-heading);
-    letter-spacing: -0.02em;
-  }
+  /* Typography role mappings */
+  h1 { @apply text-display-md font-display; }
+  h2 { @apply text-page-heading font-display; }
+  h3 { @apply text-section-heading font-sans font-medium; }
+  h4 { @apply text-card-heading font-sans font-medium; }
+  p { @apply text-body; }
+  small { @apply text-body-small; }
 }
 
 /* ------------------------------------------------------------------ */
-/* Keyframes                                                           */
-/* ------------------------------------------------------------------ */
-@keyframes shimmer {
-  0% { background-position: 100% 0; }
-  100% { background-position: 0 0; }
-}
-
-@keyframes stream-blink {
-  0%, 49% { opacity: 1; }
-  50%, 100% { opacity: 0; }
-}
-
-@keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0px); }
-}
-
-@keyframes text-gradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-/* ------------------------------------------------------------------ */
-/* Utility classes                                                     */
+/* 4. Materials & Lighting                                            */
 /* ------------------------------------------------------------------ */
 @layer utilities {
-  /* Premium glassmorphism with subtle glow */
-  .glass-panel {
-    background-color: color-mix(in oklab, var(--surface) 40%, transparent);
+  .material-steel {
+    background-color: var(--color-steel);
+    border: 1px solid var(--color-surface-border);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+  }
+  .material-glass {
+    background-color: color-mix(in oklab, var(--color-surface) 40%, transparent);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
-    border: 1px solid color-mix(in oklab, white 8%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-paper) 8%, transparent);
     box-shadow: 
-      0 4px 24px -1px color-mix(in oklab, black 50%, transparent),
-      inset 0 1px 0 0 color-mix(in oklab, white 5%, transparent);
+      0 4px 24px -1px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 0 color-mix(in oklab, var(--color-paper) 5%, transparent);
+  }
+  .material-paper {
+    background-color: var(--color-paper);
+    color: var(--color-canvas);
+    box-shadow: 0 1px 2px 0 rgba(0,0,0,0.1);
+  }
+  .material-obsidian {
+    background-color: var(--color-obsidian);
+    border: 1px solid var(--color-surface-border);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.02);
+  }
+  .material-ember-glow {
+    background-color: color-mix(in oklab, var(--color-ember) 15%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-ember) 30%, transparent);
+    box-shadow: 0 0 20px -5px color-mix(in oklab, var(--color-ember) 40%, transparent);
+  }
+  .material-proof-violet {
+    background-color: color-mix(in oklab, var(--color-proof-violet) 15%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-proof-violet) 30%, transparent);
+    color: var(--color-proof-violet);
+    box-shadow: 0 0 16px -4px color-mix(in oklab, var(--color-proof-violet) 30%, transparent);
   }
 
-  /* Animated text gradient */
-  .text-gradient-animated {
-    background: linear-gradient(
-      to right,
-      var(--color-primary),
-      var(--color-ai),
-      var(--color-primary)
-    );
-    background-size: 200% auto;
-    color: transparent;
-    -webkit-background-clip: text;
-    background-clip: text;
-    animation: text-gradient 4s linear infinite;
+  /* Global Visual Effects */
+  .bg-film-grain {
+    /* To be applied to an SVG overlay */
   }
+  .bg-gradient-noise {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    mix-blend-mode: overlay;
+    opacity: 0.04;
+  }
+  .focus-ring-semantic {
+    @apply focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-ember)];
+  }
+}
 
-  /* Deep Space Mesh Gradient Background */
-  .bg-mesh-dark {
-    background-image: 
-      radial-gradient(circle at 15% 50%, color-mix(in oklab, var(--color-primary) 12%, transparent), transparent 25%),
-      radial-gradient(circle at 85% 30%, color-mix(in oklab, var(--color-ai) 12%, transparent), transparent 25%);
-  }
-
-  .hover-spotlight {
-    position: relative;
-    overflow: hidden;
-  }
-  
-  .hover-spotlight::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    transition: opacity 0.3s;
-    background: radial-gradient(
-      600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
-      color-mix(in oklab, var(--color-primary) 8%, transparent),
-      transparent 40%
-    );
-    pointer-events: none;
-    z-index: 0;
-  }
-  
-  .hover-spotlight:hover::before {
-    opacity: 1;
-  }
-
-  .skeleton-shimmer {
-    background-image: linear-gradient(
-      90deg,
-      var(--surface) 25%,
-      var(--surface-2) 37%,
-      var(--surface) 63%
-    );
-    background-size: 400% 100%;
-    animation: shimmer 1.4s ease infinite;
-  }
-
-  .stream-cursor::after {
-    content: "";
-    display: inline-block;
-    width: 2px;
-    height: 1em;
-    margin-left: 2px;
-    vertical-align: text-bottom;
-    background-color: var(--primary);
-    animation: stream-blink 1s step-end infinite;
+/* ------------------------------------------------------------------ */
+/* Motion System (Constraint 10)                                      */
+/* ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

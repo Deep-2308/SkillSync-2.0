@@ -1,19 +1,18 @@
 import type { Metadata } from "next";
-import { Outfit, Plus_Jakarta_Sans } from "next/font/google";
+import { Fraunces, Geist } from "next/font/google";
 import { Providers } from "@/components/providers";
 import "./globals.css";
 
-const outfit = Outfit({
-  variable: "--font-outfit",
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  axes: ["opsz", "wght"],
   display: "swap",
 });
 
-const plusJakarta = Plus_Jakarta_Sans({
-  variable: "--font-plus-jakarta",
+const geistSans = Geist({
+  variable: "--font-geist-sans",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -54,6 +53,19 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
+function FilmGrain() {
+  return (
+    <div className="pointer-events-none fixed inset-0 z-50 mix-blend-overlay opacity-[0.04]">
+      <svg className="absolute inset-0 h-full w-full opacity-50" xmlns="http://www.w3.org/2000/svg">
+        <filter id="grainFilter">
+          <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" />
+        </filter>
+        <rect width="100%" height="100%" filter="url(#grainFilter)" />
+      </svg>
+    </div>
+  );
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -63,9 +75,10 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`dark ${outfit.variable} ${plusJakarta.variable} h-full antialiased`}
+      className={`dark ${fraunces.variable} ${geistSans.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
+      <body className="min-h-full flex flex-col bg-background text-foreground font-sans selection:bg-[var(--color-ember)] selection:text-[var(--color-canvas)]">
+        <FilmGrain />
         <Providers>{children}</Providers>
       </body>
     </html>
