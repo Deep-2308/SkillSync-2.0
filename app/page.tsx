@@ -8,6 +8,7 @@ import { motion } from "@/lib/motion";
 import { SplitText } from "@/lib/motion/SplitText";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 import { TheProblemSection } from "@/components/landing/TheProblemSection";
+import { TheForgeSection } from "@/components/landing/TheForgeSection";
 
 const SceneEngine = dynamic(
   () => import("@/lib/scene/SceneEngine").then((mod) => mod.SceneEngine),
@@ -59,6 +60,7 @@ export default function LandingPage() {
       </main>
       
       <TheProblemSection />
+      <TheForgeSection />
     </div>
   );
 }

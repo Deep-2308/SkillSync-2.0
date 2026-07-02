@@ -78,14 +78,18 @@ const fragmentShader = `
   void main() {
     // Magnetic pull to pointer
     float dist = distance(vUv, uPointer);
-    float pull = smoothstep(0.5, 0.0, dist) * 0.5 * (1.0 - uStateBlend * 0.8); // Pull diminishes in Problem state
+    float isHero = clamp(1.0 - uStateBlend, 0.0, 1.0);
+    float isProblem = clamp(1.0 - abs(uStateBlend - 1.0), 0.0, 1.0);
+    float isForge = clamp(uStateBlend - 1.0, 0.0, 1.0);
 
-    // Speed modifier based on state (slower in Problem state)
-    float timeMod = uTime * mix(0.1, 0.02, uStateBlend);
+    float pull = smoothstep(0.5, 0.0, dist) * 0.5 * (1.0 - isProblem * 0.8 + isForge * 0.5);
+
+    // Speed modifier based on state (slower in Problem, fastest in Forge)
+    float timeMod = uTime * (0.1 * isHero + 0.02 * isProblem + 0.2 * isForge);
     
-    // Noise scale (more rigid/compressed in Problem state)
-    float scale1 = mix(3.0, 8.0, uStateBlend);
-    float scale2 = mix(5.0, 15.0, uStateBlend);
+    // Noise scale (rigid in problem, dynamic in forge)
+    float scale1 = 3.0 * isHero + 8.0 * isProblem + 2.0 * isForge;
+    float scale2 = 5.0 * isHero + 15.0 * isProblem + 4.0 * isForge;
 
     // Flow field
     float n1 = snoise(vec3(vUv * scale1, timeMod));
@@ -94,14 +98,18 @@ const fragmentShader = `
     float noise = (n1 + n2) * 0.5;
     
     // Core energy mapped between Canvas and Ember/Violet
-    // Lighting compresses in Problem state
-    float threshold = mix(0.8, 0.5, uStateBlend);
+    // Lighting compresses in Problem state, expands in Forge
+    float threshold = 0.8 * isHero + 0.5 * isProblem + 1.2 * isForge;
     vec3 color = mix(uColorCanvas, uColorEmber, smoothstep(-0.2, threshold, noise + pull * 0.5) * uIntensity);
-    color = mix(color, uColorViolet, smoothstep(0.2, 1.0, noise) * 0.5 * uIntensity * (1.0 - uStateBlend * 0.5));
+    
+    // Violet diminishes in Problem, vanishes in Forge
+    float violetIntensity = 0.5 * isHero + 0.2 * isProblem + 0.0 * isForge;
+    color = mix(color, uColorViolet, smoothstep(0.2, 1.0, noise) * violetIntensity * uIntensity);
 
-    // Vignette
+    // Vignette (tighter in Problem)
     float vignette = distance(vUv, vec2(0.5));
-    color = mix(color, uColorCanvas, smoothstep(0.3 - uStateBlend * 0.1, 1.0, vignette));
+    float vignetteThreshold = 0.3 * isHero + 0.2 * isProblem + 0.4 * isForge;
+    color = mix(color, uColorCanvas, smoothstep(vignetteThreshold, 1.0, vignette));
 
     gl_FragColor = vec4(color, 1.0);
   }
@@ -149,6 +157,7 @@ export function SceneEngine() {
     const unsubscribe = sceneEventBus.subscribe((payload) => {
       let targetBlend = 0;
       if (payload.state === "problem") targetBlend = 1;
+      if (payload.state === "forge") targetBlend = 2;
       
       gsap.to(sceneUniforms.uStateBlend, {
         value: targetBlend,
